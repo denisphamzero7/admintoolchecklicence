@@ -1,76 +1,89 @@
 import hashlib
 import tkinter as tk
+from tkinter import font
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
-from helpers.path_manager import apply_window_icon 
-# ============================================================================
-# [QUAN TRỌNG] MÃ BÍ MẬT - PHẢI GIỐNG HỆT FILE helpers/license_manager.py
-# Nếu bên kia bạn đổi, bên này cũng phải đổi theo thì Key mới khớp.
-# ============================================================================
-SECRET_SALT = "MISA_APP_2026_SECRET_KEY" 
+from helpers.path_manager import apply_window_icon
+
+SECRET_SALT = "MISA_APP_2026_SECRET_KEY"
 
 class AdminKeyGen(ttk.Window):
     def __init__(self):
-        super().__init__(title="Admin Key Generator (Cấp Bản Quyền)", themename="superhero")
-        self.geometry("500x400")
-        
-        # Căn giữa màn hình
-        self.place_window_center()
+        super().__init__(title="Admin Key Generator (Cấp quyền sử dụng)", themename="superhero")
+         
         apply_window_icon(self)
-        # --- TIÊU ĐỀ ---
-        ttk.Label(self, text="CÔNG CỤ TẠO KEY BẢN QUYỀN", 
-                  font=("Segoe UI", 16, "bold"), bootstyle="info").pack(pady=20)
+        
+        # --- CẤU HÌNH VĂN BẢN (2 DÒNG) ---
+        self.line1 = "UỶ BAN BẦU CỬ THÀNH PHỐ ĐÀ NẴNG"
+        self.line2 = "CÔNG CỤ TẠO KEY SỬ DỤNG"
+        
+        # Ghép lại để hiển thị (thêm \n để xuống dòng)
+        self.full_title = f"{self.line1}\n{self.line2}"
+        
+        # Font chữ
+        self.title_font_cfg = ("Segoe UI", 16, "bold")
+
+        # --- TÍNH TOÁN CHIỀU RỘNG MÀN HÌNH ---
+        measure_font = font.Font(family=self.title_font_cfg[0], size=self.title_font_cfg[1], weight=self.title_font_cfg[2])
+        
+        # Đo chiều rộng của cả 2 dòng, lấy dòng nào dài hơn làm chuẩn
+        w1 = measure_font.measure(self.line1)
+        w2 = measure_font.measure(self.line2)
+        max_text_width = max(w1, w2)
+        
+        # Cộng thêm padding (mỗi bên 50px cho rộng rãi)
+        window_width = max_text_width + 100
+        window_height = 480 # Tăng nhẹ chiều cao vì tiêu đề giờ là 2 dòng
+        
+        self.geometry(f"{window_width}x{window_height}")
+        self.place_window_center()
+
+        # --- TIÊU ĐỀ (ĐÃ CĂN GIỮA) ---
+        # justify="center": Quan trọng để dòng trên và dòng dưới thẳng hàng nhau ở giữa
+        ttk.Label(self, text=self.full_title, 
+                  font=self.title_font_cfg, 
+                  bootstyle="info", 
+                  justify="center").pack(pady=20)
 
         # --- KHUNG NHẬP MÃ MÁY ---
         frame_input = ttk.Labelframe(self, text="1. Nhập Mã Máy (HWID) của khách", padding=15)
-        frame_input.pack(fill=X, padx=20, pady=5)
+        frame_input.pack(fill=X, padx=50, pady=5) # padx khớp với padding tính toán ở trên
         
         self.ent_hwid = ttk.Entry(frame_input, font=("Consolas", 11))
         self.ent_hwid.pack(fill=X, pady=(0, 10))
-        self.ent_hwid.focus() # Tự focus để paste cho lẹ
+        self.ent_hwid.focus()
 
-        # Nút Tạo Key
         ttk.Button(frame_input, text="⚡ TẠO KEY NGAY", bootstyle="warning", 
-                   command=self.generate_key, width=20).pack(fill=X)
+                   command=self.generate_key).pack(fill=X)
 
         # --- KHUNG KẾT QUẢ ---
         frame_output = ttk.Labelframe(self, text="2. Key Kích Hoạt (Gửi cho khách)", padding=15)
-        frame_output.pack(fill=X, padx=20, pady=15)
+        frame_output.pack(fill=X, padx=50, pady=15)
         
-        self.ent_key = ttk.Entry(frame_output, font=("Consolas", 12, "bold"), bootstyle="success")
+        self.ent_key = ttk.Entry(frame_output, font=("Consolas", 12, "bold"), bootstyle="success", justify="center")
         self.ent_key.pack(fill=X, pady=(0, 10))
 
-        # Nút Copy
-        self.btn_copy = ttk.Button(frame_output, text="📋 Copy Key", bootstyle="success-outline", 
+        self.btn_copy = ttk.Button(frame_output, text="📋 SAO CHÉP KEY", bootstyle="success-outline", 
                                    command=self.copy_key, state="disabled")
         self.btn_copy.pack(fill=X)
 
-        # Label trạng thái
         self.lbl_status = ttk.Label(self, text="Sẵn sàng...", font=("Segoe UI", 9, "italic"), bootstyle="secondary")
         self.lbl_status.pack(side=BOTTOM, pady=10)
 
     def generate_key(self, event=None):
         hwid = self.ent_hwid.get().strip()
-        
         if not hwid:
             self.lbl_status.config(text="❌ Lỗi: Vui lòng nhập Mã máy!", bootstyle="danger")
             return
 
         try:
-            # --- LOGIC TẠO KEY (GIỐNG HỆT APP CHÍNH) ---
-            # Công thức: SHA256( HWID + SALT + TYPE ) -> Lấy 20 ký tự đầu
             raw_data = f"{hwid}::{SECRET_SALT}::PRO"
             key = hashlib.sha256(raw_data.encode()).hexdigest()[:20].upper()
             
-            # Hiển thị
             self.ent_key.delete(0, tk.END)
             self.ent_key.insert(0, key)
-            
-            # Update UI
             self.btn_copy.config(state="normal")
-            self.lbl_status.config(text=f"✅ Đã tạo key cho mã: {hwid[:10]}...", bootstyle="success")
-            
-            # Tự động copy luôn cho tiện
+            self.lbl_status.config(text=f"✅ Đã tạo key xong!", bootstyle="success")
             self.copy_key()
             
         except Exception as e:
@@ -81,8 +94,8 @@ class AdminKeyGen(ttk.Window):
         if key:
             self.clipboard_clear()
             self.clipboard_append(key)
-            self.update() # Giữ clipboard sau khi tắt app
-            self.lbl_status.config(text="✅ Đã copy Key vào bộ nhớ tạm!", bootstyle="success")
+            self.update()
+            self.lbl_status.config(text="✅ Đã copy Key!", bootstyle="success")
 
 if __name__ == "__main__":
     app = AdminKeyGen()
