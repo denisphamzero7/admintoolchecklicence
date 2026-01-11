@@ -1,6 +1,8 @@
 # helpers/path_manager.py
+
 import sys
 from pathlib import Path
+
 
 def resource_path(relative_path):
     """ Lấy đường dẫn tuyệt đối, fix lỗi sai đường dẫn khi chạy khác thư mục """

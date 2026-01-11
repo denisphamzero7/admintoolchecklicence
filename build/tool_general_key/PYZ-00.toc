@@ -646,6 +646,7 @@
   ('helpers.path_manager',
    'D:\\tool_admin\\helpers\\path_manager.py',
    'PYMODULE'),
+  ('helpers.security', 'D:\\tool_admin\\helpers\\security.py', 'PYMODULE'),
   ('hmac', 'C:\\Users\\Admin\\anaconda3\\envs\\new\\Lib\\hmac.py', 'PYMODULE'),
   ('html',
    'C:\\Users\\Admin\\anaconda3\\envs\\new\\Lib\\html\\__init__.py',

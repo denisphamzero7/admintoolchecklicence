@@ -1,11 +1,12 @@
-import hashlib
 import tkinter as tk
 from tkinter import font
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from helpers.path_manager import apply_window_icon
 
-SECRET_SALT = "MISA_APP_2026_SECRET_KEY"
+# --- QUAN TRỌNG: Import logic tạo key từ file bảo mật ---
+# (File này sẽ được Cython mã hóa thành .pyd để giấu code)
+from helpers.security import generate_activation_key
 
 class AdminKeyGen(ttk.Window):
     def __init__(self):
@@ -76,18 +77,17 @@ class AdminKeyGen(ttk.Window):
             self.lbl_status.config(text="❌ Lỗi: Vui lòng nhập Mã máy!", bootstyle="danger")
             return
 
-        try:
-            raw_data = f"{hwid}::{SECRET_SALT}::PRO"
-            key = hashlib.sha256(raw_data.encode()).hexdigest()[:20].upper()
-            
+        # --- THAY ĐỔI Ở ĐÂY: Gọi hàm bảo mật thay vì tính toán trực tiếp ---
+        key = generate_activation_key(hwid)
+        
+        if key:
             self.ent_key.delete(0, tk.END)
             self.ent_key.insert(0, key)
             self.btn_copy.config(state="normal")
             self.lbl_status.config(text=f"✅ Đã tạo key xong!", bootstyle="success")
             self.copy_key()
-            
-        except Exception as e:
-            self.lbl_status.config(text=f"Lỗi: {str(e)}", bootstyle="danger")
+        else:
+            self.lbl_status.config(text="❌ Lỗi xử lý (Kiểm tra security module)!", bootstyle="danger")
 
     def copy_key(self):
         key = self.ent_key.get()
